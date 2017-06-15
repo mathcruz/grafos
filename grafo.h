@@ -65,9 +65,14 @@ void insere_aresta(TG * g, int id1, int id2){
 
 	TViz * novoViz = (TViz *) malloc(sizeof(TViz));
 	novoViz->id_viz = id2;
-	novoViz ->prox_viz = p1->prim_viz;
+    novoViz->prox_viz = NULL;
 
-	p1->prim_viz = novoViz;
+    TViz * v2 = p1->prim_viz;
+    if(!v2) p1->prim_viz = novoViz;
+    else{
+        while(v2->prox_viz) v2 = v2->prox_viz;
+        v2->prox_viz = novoViz;
+    }
 }
 
 void imprime(TG *g){
