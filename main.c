@@ -3,17 +3,23 @@
 #include <grafo.h>
 
 int orientado(TG*g);
-void pintarBack(TG * g,TNo* no, int cor, int controle);
-int pintar(TG * g);
+int colorir(TG * g);
+void descolorir(TG *g);
+void colorirViz(TG * g,TNo* no, int cor);
+int caminho(TG *g, TNo * no1, TNo * no2);
+int conexo(TG * g);
+void pontes(TG * g);
 TG* criaGrafo(char* nomeArq);
+
 int main(int argc, char* argv[])
 {
     if(argc<2) return 0;
     TG *g = criaGrafo(argv[1]);
     int i, n, r;
     int dir = orientado(g);
-    if(!dir) pintar(g);
-    printf("dir: %d\n", dir);
+    if(!dir) colorir(g);
+    int con = conexo(g);
+    printf("dir: %d\nconexo: %d\n", dir, con);
     while(1){
         printf("\n 1 - Inserir \n 2 - Retirar \n 3 - Buscar \n 4 - Imprimir \n 5 - Especial \n 6 - Sair\n");
         scanf("%d",&i);
@@ -32,14 +38,14 @@ int main(int argc, char* argv[])
                     printf("\n Digite o valor do no:");
                     scanf("%d",&n);
                     insere_no(g, n);
-                    if(!dir) pintar(g);
+                    if(!dir) colorir(g);
                 }else if(n == 2){
                     printf("\n Digite valor de no1 e no2:");
                     scanf("%d%d",&n,&r);
                     insere_aresta(g,n,r);
                     if(dir == 0){
                         insere_aresta(g,r,n);
-                        pintar(g);
+                        colorir(g);
                     }
                 }
                 break;
@@ -50,13 +56,14 @@ int main(int argc, char* argv[])
                     printf("\n Digite o valor do no:");
                     scanf("%d",&n);
                     retira_no(g, n);
+                    if(dir==0) colorir(g);
                 }else if(n == 2){
                     printf("\n Digite valor de no1 e no2:");
                     scanf("%d%d",&n,&r);
                     retira_aresta(g,n,r);
                     if(dir == 0){
                         retira_aresta(g,r,n);
-                        pintar(g);
+                        colorir(g);
                     }
                 }
                 break;
@@ -83,6 +90,13 @@ int main(int argc, char* argv[])
                 imprime(g);
                 break;
             case(5):
+                printf("\n Digite valor de no1 e no2:");
+                scanf("%d%d",&n,&r);
+                TNo * no1 = busca_no(g,n);
+                TNo * no2 = busca_no(g, r);
+                if(caminho(g,no1, no2)) printf("ha caminho");
+                else printf("nao ha caminho\n");
+                pontes(g);
                 //se orientado imprimir componentes fortemente conexas
                 //se nao orientado imprimir: se eh conectado (pontes e pontos de art); se nao conectado (componentes conectadas)
                 break;
@@ -108,14 +122,16 @@ int orientado(TG*g){ //verifica se eh orientado (1) ou nao orientado(0)
     return 0;
 }
 
-int pintar(TG * g){
+int colorir(TG * g){
     descolorir(g);
     TNo * p = g->prim;
-    g->cores = 0;
-    //pintarBack(g,p,1,p->id_no);
-    //pinta2(g);
-    pintarViz(g,p,1);
-    return g->cores;
+    int cor = 0;
+    while(p){
+        if(p->cor==0)colorirViz(g, p, ++cor);
+        p = p->prox_no;
+    }
+    g->cores = cor;
+    return cor;
 }
 void descolorir(TG *g){
     TNo * p = g->prim;
@@ -123,74 +139,71 @@ void descolorir(TG *g){
         p->cor = 0;
         p = p->prox_no;
     }
+    g->cores = 0;
 }
-void pintarBack(TG * g,TNo* no, int cor, int controle){
-    if(!g || !no) return;
 
-    if(no->cor !=0 ){
-        if(no->prox_no) pintarBack(g,no->prox_no, cor, no->prox_no->id_no);
-        return;
-    }
+void colorirViz(TG * g,TNo* no, int cor){
+    if(!g || !no) return;
+    if(no->cor !=0) return;
+
     no->cor = cor;
 
     TViz * v = no->prim_viz;
     while(v){
         TNo * viz = busca_no(g, v->id_viz);
-        if(viz->cor == 0)pintarBack(g, viz,cor, controle);
-        else no->cor = viz->cor;
+        colorirViz(g, viz,cor);
         v = v->prox_viz;
     }
-    if(cor != no->cor) cor--;
-    if(cor>g->cores) g->cores = cor;
-    if(controle == no->id_no && no->prox_no) pintarBack(g, no->prox_no, cor+1, no->prox_no->id_no);
 }
-void pintarViz(TG * g,TNo* no, int cor){
-    if(!g || !no) return;
-
-    if(no->cor !=0 )cor = no->cor;
-    else no->cor = cor;
-
-    TViz * v = no->prim_viz;
-    while(v){
-        TNo * viz = busca_no(g, v->id_viz);
-        viz->cor = cor;
-        v = v->prox_viz;
-    }
-    pintarViz(g, no->prox_no, cor+1);
-}
-/*
-void pinta2(TG *g){
-    TNo *no = g->prim;
-    int cor=1;
-    while(no){
-        TNo * no2 = g->prim;
-        if(no->cor!=0){
-            no = no->prox_no;
-            continue;
-        }
-        no->cor = cor;
-        while(no2){
-            if(no2->cor==0 && caminho(g,no, no2))
-                no2->cor = no->cor;
-            no2 = no2->prox_no;
-        }
-        cor++;
-        no=no->prox_no;
-    }
-}*/
 
 int caminho(TG *g, TNo * no1, TNo * no2){
     if (!g || !no1 || !no2) return 0;
     if(no2->id_no == no1->id_no) return 1;
-    if(no1->cor) return 0;
-    no1->cor = 1;
+    if(no1->cor ==  -1) return 0;
+    int cor = no1->cor, resp=0;
+    no1->cor = -1;
     TViz *v = no1->prim_viz;
-    while(v){
+    while(v && resp!=1){
         TNo * vizNo = busca_no(g, v->id_viz);
-        if(caminho(g,vizNo,no2))return 1;
+        resp = caminho(g,vizNo,no2);
         v = v->prox_viz;
     }
-    return 0;
+    no1->cor = cor;
+    return resp;
+}
+
+int conexo(TG * g){
+    TNo * no = g->prim;
+    TNo * no2 = no->prox_no;
+    while(no2){
+        if(!caminho(g,no, no2)) return 0;
+        no2 = no2->prox_no;
+    }
+    return 1;
+}
+
+void pontes(TG * g){
+    TNo * no = g->prim;
+    int conec = conexo(g);
+    if(!conec) return;
+    while(no){
+        TViz * v = no->prim_viz;
+        int prim, temp;
+        if(v){
+            prim = v->id_viz;
+            do{
+                temp = v->id_viz;
+                retira_aresta(g, no->id_no, temp);
+                retira_aresta(g, temp, no->id_no);
+                conec = conexo(g);
+                insere_aresta(g, no->id_no, temp);
+                insere_aresta(g, temp, no->id_no);
+                if(!conec) printf("ponte: %d e %d\n", no->id_no, temp);
+                v = v->prox_viz;
+            }while((v) && (v->id_viz != prim));
+        }
+        no = no->prox_no;
+    }
 }
 
 TG* criaGrafo(char* nomeArq){
@@ -206,7 +219,6 @@ TG* criaGrafo(char* nomeArq){
         insere_no(g,i+1);
     }
 
-
     r = fscanf(arquivo,"%d%d",&n,&i);
     while(r!=EOF){
         insere_aresta(g,n,i);
@@ -216,5 +228,4 @@ TG* criaGrafo(char* nomeArq){
     fclose(arquivo);
 
     return g;
-
 }
