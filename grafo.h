@@ -78,7 +78,7 @@ void insere_aresta(TG * g, int id1, int id2){
 void imprime(TG *g){
      TNo* p = g->prim;
      while(p){
-          printf("%d: cor: %d\n", p->id_no,p->cor);
+          printf("(%d) - ", p->id_no);
           TViz * v = p->prim_viz;
           printf("viz:");
           while(v){
