@@ -26,6 +26,7 @@ int main(int argc, char* argv[])
     printf("dir: %d\nconexo: %d\n", dir, con);
     while(1){
         con = conexo(g);
+        colorir(g);
         printf("\n MENU \n 1 - Inserir \n 2 - Retirar \n 3 - Buscar \n 4 - Imprimir \n 5 - Especial \n 6 - Sair\n Digite uma opcao: ");
         scanf("%d",&i);
 
@@ -43,18 +44,17 @@ int main(int argc, char* argv[])
                     printf("\n Digite o valor do no: ");
                     scanf("%d",&n);
                     insere_no(g, n);
-                    if(!dir) colorir(g);
                     printf("\n %d inserido com sucesso!\n", n);
                 }else if(n == 2){                           //INSERE ARESTA
                     printf("\n Digite valor de no1 e no2: ");
                     scanf("%d%d",&n,&r);
                     insere_aresta(g,n,r);
-                    TNo * no1 = busca_no(g, n);
-                    TNo * no2 = busca_no(g, r);
                     if(dir == 0){                           //se grafo nao orientado
                         insere_aresta(g,r,n);
                         colorir(g);
                     }
+                    TNo * no1 = busca_no(g, n);
+                    TNo * no2 = busca_no(g, r);
                     if(!no1 || !no2) printf("\n Impossivel inserir aresta entre %d e %d \n", n, r);
                     else printf("\n Aresta entre %d e %d inserida com sucesso!\n",n,r);
                 }
@@ -66,7 +66,6 @@ int main(int argc, char* argv[])
                     printf("\n Digite o valor do no: ");
                     scanf("%d",&n);
                     retira_no(g, n);
-                    if(dir==0) colorir(g);                  //se grafo nao orientado
                     printf("\n %d removido com sucesso!\n",n);
                 }else if(n == 2){                   //RETIRA ARESTA
                     printf("\n Digite valor de no1 e no2: ");
@@ -74,7 +73,6 @@ int main(int argc, char* argv[])
                     retira_aresta(g,n,r);
                     if(dir == 0){                           //se grafo nao orientado
                         retira_aresta(g,r,n);
-                        colorir(g);
                     }
                     printf("\n Aresta entre %d e %d removida com sucesso!\n",n,r);
                 }
@@ -108,6 +106,7 @@ int main(int argc, char* argv[])
                 }else{                                      //se nao orientado
                     printf("\n Grafo nao orientado\n");
                     if(con == 1){                           //se conectado
+                        printf("\n Grafo conexo\n");
                         printf("\n Pontes:\n");              //imprime pontes e pontos de articulacao
                         pontes(g);
                         printf("\n Pontos de articulacao:\n");
@@ -173,8 +172,8 @@ void coloreConexos(TG*g, TNo* no, int cor){    //colore o no e todos os grafos q
 int caminho(TG *g, TNo * no1, TNo * no2){       //verifica se existe um caminho entre um no e outro
     if (!g || !no1 || !no2) return 0;
     if(no2->id_no == no1->id_no) return 1;      //se achou retorna positivo (1)
-    if(no1->cor ==  -1) return 0;               //verifica se ja passou por aquele no. Se ja retorna 0 para evitar loop
-    int cor = no1->cor, resp=0;
+    if(no1->cor == -1) return 0;               //verifica se ja passou por aquele no. Se ja retorna 0 para evitar loop
+    int cor = no1->cor, resp = 0;
     no1->cor = -1;                              //pinta com -1 para sinalizar que aquele no ja foi visitado
     TViz *v = no1->prim_viz;
     while(v && resp!=1){
